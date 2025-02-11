@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import datetime
 import zipfile
+import tempfile  # Use temporary files
 from pdf_editor import pdf_editors
 import sys
 
@@ -67,6 +68,8 @@ if st.button("Skriv til PDF") and uploaded_file:
                         if row_index < len(form_fields):
                             data_dict[form_fields[row_index]] = cell_value
 
+                # Use a temporary file instead of saving to project folder
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
                 output_file = f"{filename}_{doc_type}.pdf"
 
                 try:
@@ -104,10 +107,11 @@ if st.session_state.generated_files:
 
     # Offer ZIP download if multiple files exist
     if len(st.session_state.generated_files) > 1:
-        zip_filename = "PDFs.zip"
-        with zipfile.ZipFile(zip_filename, "w") as zipf:
-            for file in st.session_state.generated_files:
-                zipf.write(file, os.path.basename(file))
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as temp_zip:
+            zip_filename = temp_zip.name
+            with zipfile.ZipFile(zip_filename, "w") as zipf:
+                for file in st.session_state.generated_files:
+                    zipf.write(file, os.path.basename(file))
 
         with open(zip_filename, "rb") as f:
             st.download_button(label="Last ned alle PDF-er som ZIP",
